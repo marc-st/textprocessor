@@ -12,14 +12,22 @@ import java.util.Scanner;
 
 public class FileHandler {
 	
+	String validFileType = null;
+	
+	public FileHandler(String validFileType){
+		super();
+		this.validFileType = validFileType;
+	}
 	/**
 	 * @param File - file (file that user has inputed)
 	 * @return a nested ArrayList. each element is a list of strings - 
 	 * represents sentence structure
 	 */
+	public String getValidFileType(){
+		return this.validFileType;
+	}
 	public ArrayList<ArrayList<String>> loadFile(File file){
 		ArrayList<ArrayList<String>> strings = null;
-		
 		try {
 			strings = readFileString(file);
 		} catch (FileNotFoundException e) { // catch if file does not exist
@@ -32,7 +40,7 @@ public class FileHandler {
 	 * @return true if file is of valid file type
 	 */
 	public Boolean checkFileValid(File file){
-		return (getFileExtension(file).equals("txt"));
+		return (getFileExtension(file).equals(getValidFileType()));
 	}
 	private String getFileExtension(File file){
 		String name = file.getName();
@@ -43,33 +51,6 @@ public class FileHandler {
 			e.printStackTrace();
 		}
 		return "";
-	}
-	/**
-	 * @param File -  file (that the user has inputed)
-	 * @return an ArrayList of words sorted alphabetically
-	 * @throws FileNotFoundException
-	 */
-	public ArrayList<String> sortedWords(File file) throws FileNotFoundException{
-		ArrayList<String> sortedList = new ArrayList<String>();
-		Iterator<ArrayList<String>> listOfSentences = null;
-		try {
-			listOfSentences = readFileString(file).iterator();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		while(listOfSentences.hasNext()){
-			
-			// store iterator element in an ArrayList
-			ArrayList<String> sentence = listOfSentences.next();
-			
-			// Sort strings in collection ascending alphabetically
-			Collections.sort(sentence.subList(1, sentence.size()));
-			Iterator<String> words = sentence.iterator();
-			while(words.hasNext()){
-				sortedList.add(words.next());
-			}
-		}
-		return sortedList;
 	}
 	/**
 	 * @param ArrayList<ArrayList<String>> -  document (the text converted to nested ArrayList

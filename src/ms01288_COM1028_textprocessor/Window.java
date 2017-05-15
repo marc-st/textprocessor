@@ -9,6 +9,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -45,8 +46,6 @@ public class Window {
 	private JMenuItem mntmNew, mntmLoadFile, mntmSave, mntmParse;
 	private JCheckBoxMenuItem chckbxmntmMostUsedWords, chckbxmntmAverageSentenceLength
 			, chckbxmntmNumberOfSentences, chckbxmntmWordCount, chckbxmntmQuotedText;
-
-
 	/**
 	 * Launch the application.
 	 */
@@ -54,7 +53,7 @@ public class Window {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					Window window = new Window();
+					Window window = new Window(100, 100, 800, 600);
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -66,19 +65,21 @@ public class Window {
 	/**
 	 * Create the application.
 	 */
-	public Window() {
+	public Window(int x, int y, int width, int height) {
 		initialize();
+		frame.setBounds(x, y, width, height);
 	}
-
+	public Rectangle getBounds(){
+		return frame.getBounds();
+	}
 	/**
 	 * Initialise the contents of the frame.
 	 */
 	private void initialize() {
 
-		FileHandler handler = new FileHandler();
+		FileHandler handler = new FileHandler("txt");
 		
 		frame = new JFrame();
-		frame.setBounds(100, 100, 800, 600);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setResizable(true);
 		GridBagLayout gridBagLayout = new GridBagLayout();
@@ -150,9 +151,8 @@ public class Window {
 		frame.getContentPane().add(wordCount, gbc_wordCount);
 		
 		txtrQuotedText = new JTextArea();
-		txtrQuotedText.setBackground(SystemColor.window);
-		txtrQuotedText.setWrapStyleWord(true);
 		txtrQuotedText.setLineWrap(true);
+		txtrQuotedText.setBackground(SystemColor.window);
 		txtrQuotedText.setEditable(false);
 		txtrQuotedText.setText("Quoted Text: ");
 		GridBagConstraints gbc_txtrQuotedText = new GridBagConstraints();
@@ -199,16 +199,15 @@ public class Window {
 				chooser.setFileFilter(filter);
 				int returnVal = chooser.showOpenDialog(null);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
-					/** user the FileHandler to check the file extension 
-					 * to ensure the correct file-type has been loaded
-					 */
+					// user the FileHandler to check the file extension 
+					// to ensure the correct file-type has been loaded
 					if(!handler.checkFileValid(chooser.getSelectedFile())){
 						JOptionPane.showMessageDialog(frame, "Must use correct file format");
 					}else{
 						file = handler.loadFile(chooser.getSelectedFile());
 					}
 				}
-				/** print the StringBuilder as a string in text area */
+				// print the StringBuilder as a string in text area
 				tArea.setText(printNestedArrayList(file));
 			}
 		});
@@ -225,19 +224,17 @@ public class Window {
 				// Handle open button action.
 				JFileChooser chooser = new JFileChooser();
 				FileNameExtensionFilter filter = new FileNameExtensionFilter("TXT files", "txt", "rtf");
-				/**
-				 * Only show folders not files when looking for directory to
-				 * save file to
-				 */
+				//
+				// Only show folders not files when looking for directory to
+				// save file to
 				chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 				chooser.setFileFilter(filter);
 				int returnVal = chooser.showOpenDialog(null);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 					try {
-						/**
-						 * send the file path the user has taken as a string
-						 * argument to saveFile
-						 */
+						//
+						// send the file path the user has taken as a string
+						// argument to saveFile
 						handler.saveFile(chooser.getSelectedFile().getAbsolutePath(), tArea.getText());
 					} catch (IOException e1) {
 						e1.printStackTrace();
@@ -270,6 +267,7 @@ public class Window {
 		
 		mntmParse = new JMenuItem("Ok");
 		mnParse.add(mntmParse);
+		
 		mntmParse.addActionListener(new ActionListener() {
 
 			/**
@@ -319,17 +317,19 @@ public class Window {
 					if(chckbxmntmQuotedText.isSelected()){
 						ArrayList<ArrayList<String>> quotedText = 
 								parser.getQuotedText(handler.readFileDirectInput(tArea.getText()));
-						System.out.println(quotedText.toString());
 						txtrQuotedText.setText(txtrQuotedText.getText() + printNestedArrayList(quotedText));
 					}
 				}
 			}
-		});
-		
-		
+		});	
 	}
-	private String printNestedArrayList(ArrayList<ArrayList<String>> quotes){
-		Iterator<ArrayList<String>> outerIter = quotes.iterator();
+	/**
+	 * @param ArrayList<ArrayList<String>> - quotes
+	 * @return the file as a String
+	 */
+	private String printNestedArrayList(ArrayList<ArrayList<String>> sentences){
+		if(sentences.isEmpty()) return "";
+		Iterator<ArrayList<String>> outerIter = sentences.iterator();
 		StringBuilder sb = new StringBuilder();
 		while(outerIter.hasNext()){
 			Iterator<String> innerIter = outerIter.next().iterator();
@@ -340,6 +340,11 @@ public class Window {
 		}
 		return sb.toString();
 	}
+	/**
+	 * @param ArrayList<ArrayList<String>> - fileAsSentences
+	 * @param HashMap<String, Integer> - mostCommonWords
+	 * @param ArrayList<String> - sortedWords
+	 */
 	public static void createTableFrame(ArrayList<ArrayList<String>> fileAsSentences, 
 										HashMap<String, Integer> mostCommonWords,
 										ArrayList<String> sortedWords){
@@ -359,14 +364,14 @@ public class Window {
                 tableFrame.setVisible(true);
                 tableFrame.setBounds(100, 100, 200, 600);
                 int dataIndex = 0;
+                // populate two-dimensional array of objects
 				for(String word: mostCommonWords.keySet()){
-					tableData[dataIndex][0] = word;
-					tableData[dataIndex][1] = mostCommonWords.get(word);
+					tableData[dataIndex][0] = word; // key (String)
+					tableData[dataIndex][1] = mostCommonWords.get(word); //value (Integer)
 					dataIndex++;
 				}
 				JTable table = new JTable(tableData, columnNames);
                 tableFrame.getContentPane().add(new JScrollPane(table), BorderLayout.CENTER );
-                
             }
         });
 	}
